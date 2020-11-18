@@ -1,7 +1,9 @@
 // import React, { useState, useEffect } from 'react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button, Col, Divider, Input, List, Row, Typography } from 'antd'
-import _ from 'lodash'; //uniqueId
+import _ from 'lodash' //uniqueId
+import axios from '../../config/axios' //axios
+import Todo from './Todo';
 
 const { Text } = Typography;
 
@@ -10,48 +12,35 @@ export default function TodoList() {
     const [todoList, setTodoList] = useState([]);
     const [inputField, setInputField] = useState("");
 
-    //mockup ข้อมูล
-    // useEffect(() => {
-    //     setTodoList([
-    //         {
-    //             id: 1,
-    //             task: "Do Homework"
-    //         },
-    //         {
-    //             id: 2,
-    //             task: "Play Football"
-    //         },
-    //         {
-    //             id: 3,
-    //             task: "Read Book"
-    //         },
-    //         {
-    //             id: 4,
-    //             task: "Play game"
-    //         },
-    //     ]);
-    // }, [])
+    const fetchTodoList = async () => {
+        const httpResponse = await axios.get("/todo-list");
+        setTodoList(httpResponse.data);
+    };
 
-    const addTodoItem = () => {
-        const newTodoList = [...todoList];
-        newTodoList.push({
-            id: _.uniqueId(),
-            task: inputField,
-        });
-        setTodoList(newTodoList);
+    useEffect(() => {
+        fetchTodoList()
+    }, []);
+
+
+    const addTodoItem = async () => {
+        await axios.post("/todo-list", { task: inputField });
+        fetchTodoList();
         setInputField("");
     }
 
-    const delTodoItem = (id) => {
+    const delTodoItem = async (id) => {
+
+        await axios.delete(`/todo-list/${id}`);
+        fetchTodoList();
         // วิธี 1 เอาข้อมูลใหม่ทุกตัวยกเว้นid ที่ลบออกไป
         // const newTodoList = todoList.filter(todo => todo.id !== id);
         // setTodoList(newTodoList);
 
         //วิธี 2 เรียกข้อมูลidเอามาเช็คแล้วนำข้อมูลidนั้นออกแล้วเรียก todolist ใหม่
-        const newTodoList = [...todoList];
-        const targetIndex = newTodoList.findIndex(todo => todo.id === id);
-        newTodoList.splice(targetIndex, 1);
-        setTodoList(newTodoList);
+        // const newTodoList = [...todoList];
+        // const targetIndex = newTodoList.findIndex(todo => todo.id === id);
+        // newTodoList.splice(targetIndex, 1);
+        // setTodoList(newTodoList);
     }
 
     return (
@@ -77,16 +66,7 @@ export default function TodoList() {
                         dataSource={todoList}
                         renderItem={todo => (
                             <List.Item>
-                                <Row style={{ width: '100%' }}>
-                                    <Col span={20}>
-                                        <Row justify="start">
-                                            {todo.task}
-                                        </Row>
-                                    </Col>
-                                    <Col span={4}>
-                                        <Button type="danger" onClick={() => delTodoItem(todo.id)}>Delete</Button>
-                                    </Col>
-                                </Row>
+                                <Todo del={delTodoItem} todo={todo} fetchData={fetchTodoList} />
                             </List.Item>
                         )}
                     />
